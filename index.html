@@ -40,12 +40,6 @@
       width: 100%;
       border: 2px solid #ffcc80;
     }
-    .card img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 10px;
-      margin-bottom: 10px;
-    }
     .item-title {
       font-size: 20px;
       color: #6d4c41;
@@ -141,7 +135,7 @@
   const entryTable = "entry.503019879";
   const entryNotes = "entry.1564520136";
 
-  const qty = {}, prices = {}, names = {};
+  const qty = {}, prices = {}, names = {}, sections = {};
   let allItems = [];
 
   function getTableNumber() {
@@ -169,7 +163,7 @@
     const container = document.getElementById("menu-container");
     container.innerHTML = "";
     allItems.filter(row => row[0] === section).forEach((row, i) => {
-      const [sec, name, priceStr, imgUrl] = row;
+      const [sec, name, priceStr] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
 
@@ -180,7 +174,6 @@
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
-        ${imgUrl ? `<img src="${imgUrl}" alt="${name}">` : ''}
         <div class="item-title">${name}</div>
         <div class="item-price">${price} ج</div>
         <div class="controls">
