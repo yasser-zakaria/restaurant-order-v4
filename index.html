@@ -15,7 +15,15 @@
     h2 {
       font-size: 26px;
       color: #4e342e;
+      margin-bottom: 10px;
+    }
+    select {
+      padding: 10px;
+      font-size: 16px;
       margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-family: 'Cairo', sans-serif;
     }
     .menu-container {
       display: flex;
@@ -101,133 +109,152 @@
 </head>
 <body>
 
-  <h2>🧾 طلب الطعام - طاولة <span id="table-number">؟</span></h2>
+<h2>🧾 طلب الطعام - طاولة <span id="table-number">؟</span></h2>
 
-  <form id="order-form">
-    <div class="menu-container" id="menu-container"></div>
-    <textarea id="notes" placeholder="📝 اكتب ملاحظاتك هنا (اختياري)"></textarea>
-    <p id="total-price">💰 الإجمالي: 0 جنيه</p>
-    <button type="submit" class="submit-btn">📤 إرسال الطلب</button>
-  </form>
+<select id="category-filter">
+  <option value="">اختر القسم</option>
+</select>
 
-  <div id="success-message">
-    ✅ تم إرسال الطلب بنجاح!
-    <div id="receipt-list"></div>
-  </div>
+<form id="order-form">
+  <div class="menu-container" id="menu-container"></div>
+  <textarea id="notes" placeholder="📝 اكتب ملاحظاتك هنا (اختياري)"></textarea>
+  <p id="total-price">💰 الإجمالي: 0 جنيه</p>
+  <button type="submit" class="submit-btn">📤 إرسال الطلب</button>
+</form>
 
-  <script>
-    const sheetID = "1bq1d1JsNjUTPjZmAGAGe8a8M8kPeS4dKA0ZW1ucL9fc";
-    const sheetName = "المنيو";
-    const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSc6siq4B1GyurhoKoW445ySojbZF3DLVE2VaWljYmiP5ad8Dg/formResponse";
-    const entrySummary = "entry.1245515364";
-    const entryTable = "entry.503019879";
-    const entryNotes = "entry.1564520136";
+<div id="success-message">
+  ✅ تم إرسال الطلب بنجاح!
+  <div id="receipt-list"></div>
+</div>
 
-    const qty = {};
-    let prices = {};
-    let names = {};
+<script>
+  const sheetID = "1bq1d1JsNjUTPjZmAGAGe8a8M8kPeS4dKA0ZW1ucL9fc";
+  const sheetName = "المنيو";
+  const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSc6siq4B1GyurhoKoW445ySojbZF3DLVE2VaWljYmiP5ad8Dg/formResponse";
+  const entrySummary = "entry.1245515364";
+  const entryTable = "entry.503019879";
+  const entryNotes = "entry.1564520136";
 
-    function getTableNumber() {
-      const params = new URLSearchParams(window.location.search);
-      const table = params.get("table") || "?";
-      document.getElementById("table-number").textContent = table;
-      return table;
+  const qty = {}, prices = {}, names = {}, sections = {};
+  let allItems = [];
+
+  function getTableNumber() {
+    const params = new URLSearchParams(window.location.search);
+    const table = params.get("table") || "?";
+    document.getElementById("table-number").textContent = table;
+    return table;
+  }
+
+  function changeQty(key, delta) {
+    qty[key] = Math.min(10, Math.max(0, (qty[key] || 0) + delta));
+    document.getElementById(`${key}-qty`).textContent = qty[key];
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let total = 0;
+    for (let key in qty) {
+      total += qty[key] * prices[key];
     }
+    document.getElementById("total-price").textContent = `💰 الإجمالي: ${total} جنيه`;
+  }
 
-    function changeQty(key, delta) {
-      qty[key] = Math.min(10, Math.max(0, (qty[key] || 0) + delta));
-      document.getElementById(`${key}-qty`).textContent = qty[key];
-      updateTotal();
-    }
+  function renderMenuForSection(section) {
+    const container = document.getElementById("menu-container");
+    container.innerHTML = "";
+    allItems.filter(row => row[0] === section).forEach((row, i) => {
+      const [sec, name, priceStr] = row;
+      const price = parseFloat(priceStr);
+      const key = `item${section}-${i}`;
 
-    function updateTotal() {
-      let total = 0;
-      for (let key in qty) {
-        total += qty[key] * prices[key];
-      }
-      document.getElementById("total-price").textContent = `💰 الإجمالي: ${total} جنيه`;
-    }
+      names[key] = name;
+      prices[key] = price;
+      qty[key] = 0;
 
-    function renderMenu(data) {
-      const container = document.getElementById("menu-container");
-      for (let i = 1; i < data.length; i++) {
-        const [name, priceStr] = data[i];
-        const price = parseFloat(priceStr);
-        const key = `item${i}`;
-
-        names[key] = name;
-        prices[key] = price;
-        qty[key] = 0;
-
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="item-title">${name}</div>
-          <div class="item-price">${price} ج</div>
-          <div class="controls">
-            <button type="button" onclick="changeQty('${key}', -1)">-</button>
-            <span id="${key}-qty">0</span>
-            <button type="button" onclick="changeQty('${key}', 1)">+</button>
-          </div>
-        `;
-        container.appendChild(card);
-      }
-    }
-
-    function fetchMenu() {
-      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}`;
-      fetch(url)
-        .then(res => res.text())
-        .then(text => {
-          const json = JSON.parse(text.substr(47).slice(0, -2));
-          const rows = json.table.rows.map(row => row.c.map(cell => cell ? cell.v : ""));
-          renderMenu([["الصنف", "السعر"], ...rows]);
-        });
-    }
-
-    document.getElementById("order-form").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const table = getTableNumber();
-      const notes = document.getElementById("notes").value.trim();
-      let summary = "";
-      for (let key in qty) {
-        if (qty[key] > 0) {
-          summary += `- ${names[key]}: ${qty[key]}\n`;
-        }
-      }
-      const total = Object.keys(qty).reduce((acc, k) => acc + qty[k] * prices[k], 0);
-      summary += `\n💰 الإجمالي: ${total} جنيه`;
-
-      const data = new FormData();
-      data.append(entrySummary, summary);
-      data.append(entryTable, table);
-      data.append(entryNotes, notes);
-
-      fetch(formURL, {
-        method: "POST",
-        mode: "no-cors",
-        body: data
-      }).then(() => {
-        const receipt = document.getElementById("receipt-list");
-        receipt.innerHTML = "<hr><strong>🧾 ملخص الطلب:</strong><br>" + summary.replace(/\n/g, "<br>");
-        if (notes) {
-          receipt.innerHTML += `<br><strong>📌 ملاحظات:</strong> ${notes}`;
-        }
-        document.getElementById("success-message").style.display = "block";
-        document.getElementById("notes").value = "";
-        for (let key in qty) {
-          qty[key] = 0;
-          document.getElementById(`${key}-qty`).textContent = "0";
-        }
-        updateTotal();
-      });
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="item-title">${name}</div>
+        <div class="item-price">${price} ج</div>
+        <div class="controls">
+          <button type="button" onclick="changeQty('${key}', -1)">-</button>
+          <span id="${key}-qty">0</span>
+          <button type="button" onclick="changeQty('${key}', 1)">+</button>
+        </div>
+      `;
+      container.appendChild(card);
     });
+  }
 
-    window.onload = () => {
-      getTableNumber();
-      fetchMenu();
-    };
-  </script>
+  function fetchMenu() {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}`;
+    fetch(url)
+      .then(res => res.text())
+      .then(text => {
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+        allItems = rows;
+
+        const sectionSet = new Set();
+        rows.forEach(row => sectionSet.add(row[0]));
+        const categoryFilter = document.getElementById("category-filter");
+        sectionSet.forEach(sec => {
+          const option = document.createElement("option");
+          option.value = sec;
+          option.textContent = sec;
+          categoryFilter.appendChild(option);
+        });
+
+        categoryFilter.addEventListener("change", function () {
+          renderMenuForSection(this.value);
+        });
+      });
+  }
+
+  document.getElementById("order-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const table = getTableNumber();
+    const notes = document.getElementById("notes").value.trim();
+    let summary = "";
+    for (let key in qty) {
+      if (qty[key] > 0) {
+        summary += `- ${names[key]}: ${qty[key]}\n`;
+      }
+    }
+    const total = Object.keys(qty).reduce((acc, k) => acc + qty[k] * prices[k], 0);
+    summary += `\n💰 الإجمالي: ${total} جنيه`;
+
+    const data = new FormData();
+    data.append(entrySummary, summary);
+    data.append(entryTable, table);
+    data.append(entryNotes, notes);
+
+    fetch(formURL, {
+      method: "POST",
+      mode: "no-cors",
+      body: data
+    }).then(() => {
+      const receipt = document.getElementById("receipt-list");
+      receipt.innerHTML = "<hr><strong>🧾 ملخص الطلب:</strong><br>" + summary.replace(/\n/g, "<br>");
+      if (notes) {
+        receipt.innerHTML += `<br><strong>📌 ملاحظات:</strong> ${notes}`;
+      }
+      document.getElementById("success-message").style.display = "block";
+      document.getElementById("notes").value = "";
+      for (let key in qty) {
+        qty[key] = 0;
+        const qtyEl = document.getElementById(`${key}-qty`);
+        if (qtyEl) qtyEl.textContent = "0";
+      }
+      updateTotal();
+    });
+  });
+
+  window.onload = () => {
+    getTableNumber();
+    fetchMenu();
+  };
+</script>
 
 </body>
 </html>
