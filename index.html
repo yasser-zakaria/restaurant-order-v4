@@ -119,11 +119,10 @@
   <div class="menu-container" id="menu-container"></div>
   <textarea id="notes" placeholder="📝 اكتب ملاحظاتك هنا (اختياري)"></textarea>
   <p id="total-price">💰 الإجمالي: 0 جنيه</p>
-  <button type="submit" class="submit-btn">📤 إرسال الطلب</button>
+  <button type="submit" class="submit-btn">📤 مراجعة الطلب</button>
 </form>
 
 <div id="success-message">
-  ✅ تم إرسال الطلب بنجاح!
   <div id="receipt-list"></div>
 </div>
 
@@ -135,7 +134,7 @@
   const entryTable = "entry.503019879";
   const entryNotes = "entry.1564520136";
 
-  const qty = {}, prices = {}, names = {}, sections = {};
+  const qty = {}, prices = {}, names = {};
   let allItems = [];
 
   function getTableNumber() {
@@ -166,7 +165,6 @@
       const [sec, name, priceStr] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
-
       names[key] = name;
       prices[key] = price;
       qty[key] = 0;
@@ -194,7 +192,6 @@
         const json = JSON.parse(text.substr(47).slice(0, -2));
         const rows = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
         allItems = rows;
-
         const sectionSet = new Set();
         rows.forEach(row => sectionSet.add(row[0]));
         const categoryFilter = document.getElementById("category-filter");
@@ -204,7 +201,6 @@
           option.textContent = sec;
           categoryFilter.appendChild(option);
         });
-
         categoryFilter.addEventListener("change", function () {
           renderMenuForSection(this.value);
         });
@@ -224,30 +220,50 @@
     const total = Object.keys(qty).reduce((acc, k) => acc + qty[k] * prices[k], 0);
     summary += `\n💰 الإجمالي: ${total} جنيه`;
 
-    const data = new FormData();
-    data.append(entrySummary, summary);
-    data.append(entryTable, table);
-    data.append(entryNotes, notes);
+    const receipt = document.getElementById("receipt-list");
+    receipt.innerHTML = "<hr><strong>🧾 ملخص الطلب:</strong><br>" + summary.replace(/\n/g, "<br>");
+    if (notes) {
+      receipt.innerHTML += `<br><strong>📌 ملاحظات:</strong> ${notes}`;
+    }
 
-    fetch(formURL, {
-      method: "POST",
-      mode: "no-cors",
-      body: data
-    }).then(() => {
-      const receipt = document.getElementById("receipt-list");
-      receipt.innerHTML = "<hr><strong>🧾 ملخص الطلب:</strong><br>" + summary.replace(/\n/g, "<br>");
-      if (notes) {
-        receipt.innerHTML += `<br><strong>📌 ملاحظات:</strong> ${notes}`;
-      }
-      document.getElementById("success-message").style.display = "block";
-      document.getElementById("notes").value = "";
-      for (let key in qty) {
-        qty[key] = 0;
-        const qtyEl = document.getElementById(`${key}-qty`);
-        if (qtyEl) qtyEl.textContent = "0";
-      }
-      updateTotal();
-    });
+    document.getElementById("success-message").style.display = "block";
+    document.getElementById("order-form").style.display = "none";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "✅ تأكيد الإرسال";
+    confirmBtn.className = "submit-btn";
+    confirmBtn.style.marginTop = "15px";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ تعديل الطلب";
+    editBtn.className = "submit-btn";
+    editBtn.style.backgroundColor = "#ff9800";
+    editBtn.style.marginRight = "10px";
+
+    receipt.appendChild(editBtn);
+    receipt.appendChild(confirmBtn);
+
+    confirmBtn.onclick = () => {
+      const data = new FormData();
+      data.append(entrySummary, summary);
+      data.append(entryTable, table);
+      data.append(entryNotes, notes);
+      fetch(formURL, {
+        method: "POST",
+        mode: "no-cors",
+        body: data
+      }).then(() => {
+        confirmBtn.remove();
+        editBtn.remove();
+        receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
+      });
+    };
+
+    editBtn.onclick = () => {
+      document.getElementById("success-message").style.display = "none";
+      document.getElementById("order-form").style.display = "block";
+      receipt.innerHTML = "";
+    };
   });
 
   window.onload = () => {
