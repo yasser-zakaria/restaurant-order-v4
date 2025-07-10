@@ -1,3 +1,4 @@
+<!-- نفس البداية بدون تغيير -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -39,6 +40,14 @@
       max-width: 400px;
       width: 100%;
       border: 2px solid #ffcc80;
+    }
+    .card img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      max-height: 180px;
+      object-fit: cover;
     }
     .item-title {
       font-size: 20px;
@@ -135,7 +144,7 @@
   const entryTable = "entry.503019879";
   const entryNotes = "entry.1564520136";
 
-  const qty = {}, prices = {}, names = {}, sections = {};
+  const qty = {}, prices = {}, names = {};
   let allItems = [];
 
   function getTableNumber() {
@@ -163,7 +172,7 @@
     const container = document.getElementById("menu-container");
     container.innerHTML = "";
     allItems.filter(row => row[0] === section).forEach((row, i) => {
-      const [sec, name, priceStr] = row;
+      const [sec, name, priceStr, imageURL] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
 
@@ -174,6 +183,7 @@
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
+        ${imageURL ? `<img src="${imageURL}" alt="${name}" loading="lazy">` : ""}
         <div class="item-title">${name}</div>
         <div class="item-price">${price} ج</div>
         <div class="controls">
