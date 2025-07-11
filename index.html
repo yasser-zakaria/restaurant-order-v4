@@ -238,17 +238,41 @@
     document.getElementById("success-message").style.display = "block";
     document.getElementById("order-form").style.display = "none";
 
-    const data = new FormData();
-    data.append(entrySummary, summary);
-    data.append(entryTable, table);
-    data.append(entryNotes, notes);
-    fetch(formURL, {
-      method: "POST",
-      mode: "no-cors",
-      body: data
-    }).then(() => {
-      receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
-    });
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "✅ تأكيد الإرسال";
+    confirmBtn.className = "submit-btn";
+    confirmBtn.style.marginTop = "15px";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ تعديل الطلب";
+    editBtn.className = "submit-btn";
+    editBtn.style.backgroundColor = "#ff9800";
+    editBtn.style.marginRight = "10px";
+
+    receipt.appendChild(editBtn);
+    receipt.appendChild(confirmBtn);
+
+    confirmBtn.onclick = () => {
+      const data = new FormData();
+      data.append(entrySummary, summary);
+      data.append(entryTable, table);
+      data.append(entryNotes, notes);
+      fetch(formURL, {
+        method: "POST",
+        mode: "no-cors",
+        body: data
+      }).then(() => {
+        confirmBtn.remove();
+        editBtn.remove();
+        receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
+      });
+    };
+
+    editBtn.onclick = () => {
+      document.getElementById("success-message").style.display = "none";
+      document.getElementById("order-form").style.display = "block";
+      receipt.innerHTML = "";
+    };
   });
 
   window.onload = () => {
