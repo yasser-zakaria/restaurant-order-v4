@@ -45,6 +45,11 @@
       color: #6d4c41;
       margin-bottom: 5px;
     }
+    .item-description {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 10px;
+    }
     .item-price {
       color: #ff5722;
       margin-bottom: 10px;
@@ -162,7 +167,7 @@
     const container = document.getElementById("menu-container");
     container.innerHTML = "";
     allItems.filter(row => row[0] === section).forEach((row, i) => {
-      const [sec, name, priceStr] = row;
+      const [sec, name, priceStr, , description = ""] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
       names[key] = name;
@@ -173,6 +178,7 @@
       card.className = "card";
       card.innerHTML = `
         <div class="item-title">${name}</div>
+        <div class="item-description">${description}</div>
         <div class="item-price">${price} ج</div>
         <div class="controls">
           <button type="button" onclick="changeQty('${key}', -1)">-</button>
