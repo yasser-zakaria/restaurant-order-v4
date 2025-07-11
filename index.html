@@ -238,18 +238,6 @@
     document.getElementById("success-message").style.display = "block";
     document.getElementById("order-form").style.display = "none";
 
-    const newOrderBtn = document.createElement("button");
-    newOrderBtn.textContent = "🔄 طلب جديد";
-    newOrderBtn.className = "submit-btn";
-    newOrderBtn.style.backgroundColor = "#1976d2";
-    newOrderBtn.style.marginTop = "15px";
-
-    receipt.appendChild(newOrderBtn);
-
-    newOrderBtn.onclick = () => {
-      location.reload();
-    };
-
     const data = new FormData();
     data.append(entrySummary, summary);
     data.append(entryTable, table);
