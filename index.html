@@ -170,9 +170,12 @@
       const [sec, name, priceStr, description = ""] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
-      names[key] = name;
-      prices[key] = price;
-      qty[key] = 0;
+
+      if (!(key in qty)) {
+        qty[key] = 0;
+        prices[key] = price;
+        names[key] = name;
+      }
 
       const card = document.createElement("div");
       card.className = "card";
@@ -182,7 +185,7 @@
         <div class="item-price">${price} ج</div>
         <div class="controls">
           <button type="button" onclick="changeQty('${key}', -1)">-</button>
-          <span id="${key}-qty">0</span>
+          <span id="${key}-qty">${qty[key]}</span>
           <button type="button" onclick="changeQty('${key}', 1)">+</button>
         </div>
       `;
