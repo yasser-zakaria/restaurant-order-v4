@@ -167,7 +167,7 @@
     const container = document.getElementById("menu-container");
     container.innerHTML = "";
     allItems.filter(row => row[0] === section).forEach((row, i) => {
-      const [sec, name, priceStr, , description = ""] = row;
+      const [sec, name, priceStr, description = ""] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
       names[key] = name;
