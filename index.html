@@ -249,8 +249,15 @@
     editBtn.style.backgroundColor = "#ff9800";
     editBtn.style.marginRight = "10px";
 
+    const newOrderBtn = document.createElement("button");
+    newOrderBtn.textContent = "🔄 طلب جديد";
+    newOrderBtn.className = "submit-btn";
+    newOrderBtn.style.backgroundColor = "#1976d2";
+    newOrderBtn.style.marginRight = "10px";
+
     receipt.appendChild(editBtn);
     receipt.appendChild(confirmBtn);
+    receipt.appendChild(newOrderBtn);
 
     confirmBtn.onclick = () => {
       const data = new FormData();
@@ -264,6 +271,7 @@
       }).then(() => {
         confirmBtn.remove();
         editBtn.remove();
+        newOrderBtn.remove();
         receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
       });
     };
@@ -272,6 +280,10 @@
       document.getElementById("success-message").style.display = "none";
       document.getElementById("order-form").style.display = "block";
       receipt.innerHTML = "";
+    };
+
+    newOrderBtn.onclick = () => {
+      location.reload();
     };
   });
 
