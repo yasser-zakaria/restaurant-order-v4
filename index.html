@@ -167,7 +167,7 @@
     const container = document.getElementById("menu-container");
     container.innerHTML = "";
     allItems.filter(row => row[0] === section).forEach((row, i) => {
-      const [sec, name, priceStr, description = ""] = row;
+      const [sec, name, priceStr, description] = row;
       const price = parseFloat(priceStr);
       const key = `item${section}-${i}`;
 
@@ -181,7 +181,7 @@
       card.className = "card";
       card.innerHTML = `
         <div class="item-title">${name}</div>
-        <div class="item-description">${description}</div>
+        ${description ? `<div class="item-description">${description}</div>` : ""}
         <div class="item-price">${price} ج</div>
         <div class="controls">
           <button type="button" onclick="changeQty('${key}', -1)">-</button>
