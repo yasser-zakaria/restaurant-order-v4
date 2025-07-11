@@ -238,53 +238,29 @@
     document.getElementById("success-message").style.display = "block";
     document.getElementById("order-form").style.display = "none";
 
-    const confirmBtn = document.createElement("button");
-    confirmBtn.textContent = "✅ تأكيد الإرسال";
-    confirmBtn.className = "submit-btn";
-    confirmBtn.style.marginTop = "15px";
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "✏️ تعديل الطلب";
-    editBtn.className = "submit-btn";
-    editBtn.style.backgroundColor = "#ff9800";
-    editBtn.style.marginRight = "10px";
-
     const newOrderBtn = document.createElement("button");
     newOrderBtn.textContent = "🔄 طلب جديد";
     newOrderBtn.className = "submit-btn";
     newOrderBtn.style.backgroundColor = "#1976d2";
-    newOrderBtn.style.marginRight = "10px";
+    newOrderBtn.style.marginTop = "15px";
 
-    receipt.appendChild(editBtn);
-    receipt.appendChild(confirmBtn);
     receipt.appendChild(newOrderBtn);
-
-    confirmBtn.onclick = () => {
-      const data = new FormData();
-      data.append(entrySummary, summary);
-      data.append(entryTable, table);
-      data.append(entryNotes, notes);
-      fetch(formURL, {
-        method: "POST",
-        mode: "no-cors",
-        body: data
-      }).then(() => {
-        confirmBtn.remove();
-        editBtn.remove();
-        newOrderBtn.remove();
-        receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
-      });
-    };
-
-    editBtn.onclick = () => {
-      document.getElementById("success-message").style.display = "none";
-      document.getElementById("order-form").style.display = "block";
-      receipt.innerHTML = "";
-    };
 
     newOrderBtn.onclick = () => {
       location.reload();
     };
+
+    const data = new FormData();
+    data.append(entrySummary, summary);
+    data.append(entryTable, table);
+    data.append(entryNotes, notes);
+    fetch(formURL, {
+      method: "POST",
+      mode: "no-cors",
+      body: data
+    }).then(() => {
+      receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
+    });
   });
 
   window.onload = () => {
