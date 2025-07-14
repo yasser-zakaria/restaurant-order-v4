@@ -17,13 +17,26 @@
       color: #4e342e;
       margin-bottom: 10px;
     }
-    select {
-      padding: 10px;
-      font-size: 16px;
+    .tabs-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
       margin-bottom: 20px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-family: 'Cairo', sans-serif;
+    }
+    .tab-button {
+      padding: 10px 20px;
+      background-color: #ffe0b2;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .tab-button.active {
+      background-color: #fb8c00;
+      color: white;
+      font-weight: bold;
     }
     .menu-container {
       display: grid;
@@ -39,13 +52,6 @@
       width: 100%;
       max-width: 300px;
       border: 2px solid #ffcc80;
-    }
-    .card img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 10px;
     }
     .item-title {
       font-size: 20px;
@@ -123,9 +129,7 @@
 
 <h2>🧾 طلب الطعام - طاولة <span id="table-number">؟</span></h2>
 
-<select id="category-filter">
-  <option value="">اختر القسم</option>
-</select>
+<div id="category-tabs" class="tabs-container"></div>
 
 <form id="order-form">
   <div class="menu-container" id="menu-container"></div>
@@ -173,34 +177,32 @@
   function renderMenuForSection(section) {
     const container = document.getElementById("menu-container");
     container.innerHTML = "";
-    allItems
-      .filter(row => row[0] === section)
-      .forEach((row, i) => {
-        const [sec, name, priceStr, description, imageUrl] = row;
-        const price = parseFloat(priceStr);
-        const key = `item${section}-${i}`;
+    allItems.filter(row => row[0] === section).forEach((row, i) => {
+      const [sec, name, priceStr, description, imageUrl] = row;
+      const price = parseFloat(priceStr);
+      const key = `item${section}-${i}`;
 
-        if (!(key in qty)) {
-          qty[key] = 0;
-          prices[key] = price;
-          names[key] = name;
-        }
+      if (!(key in qty)) {
+        qty[key] = 0;
+        prices[key] = price;
+        names[key] = name;
+      }
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          ${imageUrl ? `<img src="${imageUrl}" alt="${name}">` : ""}
-          <div class="item-title">${name}</div>
-          ${description ? `<div class="item-description">${description}</div>` : ""}
-          <div class="item-price">${price} ج</div>
-          <div class="controls">
-            <button type="button" onclick="changeQty('${key}', -1)">-</button>
-            <span id="${key}-qty">${qty[key]}</span>
-            <button type="button" onclick="changeQty('${key}', 1)">+</button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        ${imageUrl ? `<img src="${imageUrl}" alt="${name}" style="width:100%; border-radius:10px; margin-bottom:10px;">` : ""}
+        <div class="item-title">${name}</div>
+        ${description ? `<div class="item-description">${description}</div>` : ""}
+        <div class="item-price">${price} ج</div>
+        <div class="controls">
+          <button type="button" onclick="changeQty('${key}', -1)">-</button>
+          <span id="${key}-qty">${qty[key]}</span>
+          <button type="button" onclick="changeQty('${key}', 1)">+</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
   }
 
   function fetchMenu() {
@@ -213,16 +215,18 @@
         allItems = rows;
         const sectionSet = new Set();
         rows.forEach(row => sectionSet.add(row[0]));
-        const categoryFilter = document.getElementById("category-filter");
-        categoryFilter.innerHTML = `<option value="">اختر القسم</option>`;
+        const categoryTabs = document.getElementById("category-tabs");
+        categoryTabs.innerHTML = "";
         sectionSet.forEach(sec => {
-          const option = document.createElement("option");
-          option.value = sec;
-          option.textContent = sec;
-          categoryFilter.appendChild(option);
-        });
-        categoryFilter.addEventListener("change", function () {
-          renderMenuForSection(this.value);
+          const tab = document.createElement("button");
+          tab.className = "tab-button";
+          tab.textContent = sec;
+          tab.onclick = () => {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            tab.classList.add('active');
+            renderMenuForSection(sec);
+          };
+          categoryTabs.appendChild(tab);
         });
       });
   }
