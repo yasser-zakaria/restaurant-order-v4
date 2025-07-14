@@ -156,9 +156,160 @@
   <div id="receipt-list"></div>
 </div>
 
-<!-- JavaScript remains unchanged -->
 <script>
-// كود الجافاسكربت كما هو بدون تغيير
+  const sheetID = "1bq1d1JsNjUTPjZmAGAGe8a8M8kPeS4dKA0ZW1ucL9fc";
+  const sheetName = "المنيو";
+  const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSc6siq4B1GyurhoKoW445ySojbZF3DLVE2VaWljYmiP5ad8Dg/formResponse";
+  const entrySummary = "entry.1245515364";
+  const entryTable = "entry.503019879";
+  const entryNotes = "entry.1564520136";
+
+  const qty = {}, prices = {}, names = {};
+  let allItems = [];
+
+  function getTableNumber() {
+    const params = new URLSearchParams(window.location.search);
+    const table = params.get("table") || "؟";
+    document.getElementById("table-number").textContent = table;
+    return table;
+  }
+
+  function changeQty(key, delta) {
+    qty[key] = Math.min(10, Math.max(0, (qty[key] || 0) + delta));
+    document.getElementById(`${key}-qty`).textContent = qty[key];
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let total = 0;
+    for (let key in qty) {
+      total += qty[key] * prices[key];
+    }
+    document.getElementById("total-price").textContent = `💰 الإجمالي: ${total} جنيه`;
+  }
+
+  function renderMenuForSection(section) {
+    const container = document.getElementById("menu-container");
+    container.innerHTML = "";
+    allItems.filter(row => row[0] === section).forEach((row, i) => {
+      const [sec, name, priceStr, description, imageUrl] = row;
+      const price = parseFloat(priceStr);
+      const key = `item${section}-${i}`;
+      if (!(key in qty)) {
+        qty[key] = 0;
+        prices[key] = price;
+        names[key] = name;
+      }
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        ${imageUrl ? `<img src="${imageUrl}" alt="${name}" style="width:100%; border-radius:10px; margin-bottom:10px;">` : ""}
+        <div class="item-title">${name}</div>
+        ${description ? `<div class="item-description">${description}</div>` : ""}
+        <div class="item-price">${price} ج</div>
+        <div class="controls">
+          <button type="button" onclick="changeQty('${key}', -1)">-</button>
+          <span id="${key}-qty">${qty[key]}</span>
+          <button type="button" onclick="changeQty('${key}', 1)">+</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function fetchMenu() {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}`;
+    fetch(url)
+      .then(res => res.text())
+      .then(text => {
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+        allItems = rows;
+        const sectionSet = new Set();
+        rows.forEach(row => sectionSet.add(row[0]));
+        const tabsContainer = document.getElementById("category-tabs");
+        tabsContainer.innerHTML = "";
+        sectionSet.forEach(sec => {
+          const btn = document.createElement("button");
+          btn.className = "tab-button";
+          btn.textContent = sec;
+          btn.onclick = () => {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderMenuForSection(sec);
+          };
+          tabsContainer.appendChild(btn);
+        });
+        // اختيار أول تبويب تلقائيًا
+        if (tabsContainer.firstChild) {
+          tabsContainer.firstChild.click();
+        }
+      });
+  }
+
+  document.getElementById("order-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const table = getTableNumber();
+    const notes = document.getElementById("notes").value.trim();
+    let summary = "";
+    for (let key in qty) {
+      if (qty[key] > 0) {
+        summary += `- ${names[key]}: ${qty[key]}\n`;
+      }
+    }
+    const total = Object.keys(qty).reduce((acc, k) => acc + qty[k] * prices[k], 0);
+    summary += `\n💰 الإجمالي: ${total} جنيه`;
+
+    const receipt = document.getElementById("receipt-list");
+    receipt.innerHTML = "<hr><strong>🧾 ملخص الطلب:</strong><br>" + summary.replace(/\n/g, "<br>");
+    if (notes) {
+      receipt.innerHTML += `<br><strong>📌 ملاحظات:</strong> ${notes}`;
+    }
+
+    document.getElementById("success-message").style.display = "block";
+    document.getElementById("order-form").style.display = "none";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "✅ تأكيد الإرسال";
+    confirmBtn.className = "submit-btn";
+    confirmBtn.style.marginTop = "15px";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ تعديل الطلب";
+    editBtn.className = "submit-btn";
+    editBtn.style.backgroundColor = "#ff9800";
+    editBtn.style.marginRight = "10px";
+
+    receipt.appendChild(editBtn);
+    receipt.appendChild(confirmBtn);
+
+    confirmBtn.onclick = () => {
+      const data = new FormData();
+      data.append(entrySummary, summary);
+      data.append(entryTable, table);
+      data.append(entryNotes, notes);
+      fetch(formURL, {
+        method: "POST",
+        mode: "no-cors",
+        body: data
+      }).then(() => {
+        confirmBtn.remove();
+        editBtn.remove();
+        receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
+      });
+    };
+
+    editBtn.onclick = () => {
+      document.getElementById("success-message").style.display = "none";
+      document.getElementById("order-form").style.display = "block";
+      receipt.innerHTML = "";
+    };
+  });
+
+  window.onload = () => {
+    getTableNumber();
+    fetchMenu();
+  };
 </script>
 
 </body>
