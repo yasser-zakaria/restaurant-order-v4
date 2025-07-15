@@ -137,7 +137,7 @@
     #floating-cart-btn {
       position: fixed;
       bottom: 20px;
-      left: 20px;
+      left: 20px; /* ← تم تعديله من right إلى left */
       background-color: #fb8c00;
       color: white;
       padding: 12px 20px;
@@ -286,17 +286,27 @@
     }
     document.getElementById("success-message").style.display = "block";
     document.getElementById("order-form").style.display = "none";
+
     const confirmBtn = document.createElement("button");
     confirmBtn.textContent = "✅ تأكيد الإرسال";
     confirmBtn.className = "submit-btn";
-    confirmBtn.style.marginTop = "15px";
+
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️ تعديل الطلب";
     editBtn.className = "submit-btn";
     editBtn.style.backgroundColor = "#ff9800";
-    editBtn.style.marginRight = "10px";
-    receipt.appendChild(editBtn);
-    receipt.appendChild(confirmBtn);
+
+    const btnWrapper = document.createElement("div");
+    btnWrapper.style.display = "flex";
+    btnWrapper.style.flexWrap = "wrap";
+    btnWrapper.style.justifyContent = "center";
+    btnWrapper.style.gap = "10px";
+    btnWrapper.style.marginTop = "15px";
+
+    btnWrapper.appendChild(editBtn);
+    btnWrapper.appendChild(confirmBtn);
+    receipt.appendChild(btnWrapper);
+
     confirmBtn.onclick = () => {
       const data = new FormData();
       data.append(entrySummary, summary);
@@ -307,11 +317,11 @@
         mode: "no-cors",
         body: data
       }).then(() => {
-        confirmBtn.remove();
-        editBtn.remove();
+        btnWrapper.remove();
         receipt.innerHTML += "<br><strong>✅ تم الإرسال بنجاح!</strong>";
       });
     };
+
     editBtn.onclick = () => {
       document.getElementById("success-message").style.display = "none";
       document.getElementById("order-form").style.display = "block";
